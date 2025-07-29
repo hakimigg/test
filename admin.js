@@ -229,23 +229,24 @@ async function loadPromotions() {
   try {
     const { data, error } = await supabase
       .from('promotions')
-      .select('*')
-      .order('created_at', { ascending: false });
+      .select('*');
     
     if (error) {
       // If promotions table doesn't exist, just show empty state
-      if (error.code === 'PGRST116') {
+      if (error.code === 'PGRST116' || error.code === 'PGRST205') {
         displayPromotions([]);
         return;
       }
       throw error;
     }
     
-    displayPromotions(data || []);
+    // Sort by id if created_at doesn't exist
+    const sortedData = data ? data.sort((a, b) => b.id - a.id) : [];
+    displayPromotions(sortedData);
   } catch (error) {
     console.error('Error loading promotions:', error);
     // Don't show error notification for missing table
-    if (error.code !== 'PGRST116') {
+    if (error.code !== 'PGRST116' && error.code !== 'PGRST205') {
       showNotification('Error loading promotions', 'error');
     }
     displayPromotions([]);
@@ -306,15 +307,27 @@ async function loadContactSubmissions() {
   try {
     const { data, error } = await supabase
       .from('contact_submissions')
-      .select('*')
-      .order('created_at', { ascending: false });
+      .select('*');
     
-    if (error) throw error;
+    if (error) {
+      // If table doesn't exist or has issues, show empty state
+      if (error.code === 'PGRST116' || error.code === '42703') {
+        displayContactSubmissions([]);
+        return;
+      }
+      throw error;
+    }
     
-    displayContactSubmissions(data || []);
+    // Sort by id if created_at doesn't exist
+    const sortedData = data ? data.sort((a, b) => b.id - a.id) : [];
+    displayContactSubmissions(sortedData);
   } catch (error) {
     console.error('Error loading contact submissions:', error);
-    showNotification('Error loading contact submissions', 'error');
+    // Don't show error notification for missing table/column
+    if (error.code !== 'PGRST116' && error.code !== '42703') {
+      showNotification('Error loading contact submissions', 'error');
+    }
+    displayContactSubmissions([]);
   }
 }
 
@@ -336,7 +349,7 @@ function displayContactSubmissions(submissions) {
         <div class="contact-email">${submission.email}</div>
         <div class="contact-date">
           <i class="fas fa-clock"></i>
-          ${new Date(submission.created_at).toLocaleString()}
+          ${submission.created_at ? new Date(submission.created_at).toLocaleString() : 'Date not available'}
         </div>
       </div>
       <div class="contact-message">${submission.message}</div>
@@ -468,7 +481,7 @@ async function handlePromoSubmit(e) {
     }
     
     if (result.error) {
-      if (result.error.code === 'PGRST116') {
+      if (result.error.code === 'PGRST116' || result.error.code === 'PGRST205') {
         showNotification('Promotions table not found. Please create the promotions table in Supabase first.', 'error');
         return;
       }
@@ -480,7 +493,7 @@ async function handlePromoSubmit(e) {
     loadPromotions();
   } catch (error) {
     console.error('Error saving promotion:', error);
-    if (error.code === 'PGRST116') {
+    if (error.code === 'PGRST116' || error.code === 'PGRST205') {
       showNotification('Promotions table not found. Please create the promotions table in Supabase first.', 'error');
     } else {
       showNotification('Error saving promotion', 'error');
