@@ -195,7 +195,6 @@ function createMenuItemCard(item) {
       <div class="menu-item-price">${item.price} DA</div>
     </div>
     ${item.description ? `<div class="menu-item-description">${item.description}</div>` : ''}
-    ${item.image_url ? `<div class="menu-item-image"><img src="${item.image_url}" alt="${item.name}" onerror="this.style.display='none'"></div>` : ''}
     <div class="menu-item-actions">
       <button class="btn-secondary" onclick="editMenuItem(${item.id})">
         <i class="fas fa-edit"></i>
@@ -233,12 +232,23 @@ async function loadPromotions() {
       .select('*')
       .order('created_at', { ascending: false });
     
-    if (error) throw error;
+    if (error) {
+      // If promotions table doesn't exist, just show empty state
+      if (error.code === 'PGRST116') {
+        displayPromotions([]);
+        return;
+      }
+      throw error;
+    }
     
     displayPromotions(data || []);
   } catch (error) {
     console.error('Error loading promotions:', error);
-    showNotification('Error loading promotions', 'error');
+    // Don't show error notification for missing table
+    if (error.code !== 'PGRST116') {
+      showNotification('Error loading promotions', 'error');
+    }
+    displayPromotions([]);
   }
 }
 
@@ -348,7 +358,6 @@ function openModal(item = null) {
     document.getElementById('item-price').value = item.price;
     document.getElementById('item-category').value = item.category;
     document.getElementById('item-description').value = item.description || '';
-    document.getElementById('item-image').value = item.image_url || '';
   } else {
     title.textContent = 'Add Menu Item';
     form.reset();
@@ -401,8 +410,7 @@ async function handleMenuSubmit(e) {
     name: document.getElementById('item-name').value,
     price: parseFloat(document.getElementById('item-price').value),
     category: document.getElementById('item-category').value,
-    description: document.getElementById('item-description').value,
-    image_url: document.getElementById('item-image').value || null
+    description: document.getElementById('item-description').value
   };
   
   const itemId = document.getElementById('item-id').value;
@@ -459,14 +467,24 @@ async function handlePromoSubmit(e) {
         .insert([formData]);
     }
     
-    if (result.error) throw result.error;
+    if (result.error) {
+      if (result.error.code === 'PGRST116') {
+        showNotification('Promotions table not found. Please create the promotions table in Supabase first.', 'error');
+        return;
+      }
+      throw result.error;
+    }
     
     showNotification(promoId ? 'Promotion updated successfully!' : 'Promotion added successfully!');
     closePromoModal();
     loadPromotions();
   } catch (error) {
     console.error('Error saving promotion:', error);
-    showNotification('Error saving promotion', 'error');
+    if (error.code === 'PGRST116') {
+      showNotification('Promotions table not found. Please create the promotions table in Supabase first.', 'error');
+    } else {
+      showNotification('Error saving promotion', 'error');
+    }
   }
 }
 
@@ -589,28 +607,4 @@ function exportData() {
 
 
 
-// Initialize modal
-function openModal(item = null) {
-  const modal = document.getElementById('modal');
-  const modalTitle = document.getElementById('modal-title');
-  const form = document.getElementById('menu-form');
-  const idInput = document.getElementById('item-id');
-  const nameInput = document.getElementById('item-name');
-  const priceInput = document.getElementById('item-price');
-  const categoryInput = document.getElementById('item-category');
-  const descriptionInput = document.getElementById('item-description');
-  
-  if (item) {
-    modalTitle.textContent = 'Edit Menu Item';
-    idInput.value = item.id;
-    nameInput.value = item.name;
-    priceInput.value = item.price;
-    categoryInput.value = item.category;
-    descriptionInput.value = item.description || '';
-  } else {
-    modalTitle.textContent = 'Add Menu Item';
-    form.reset();
-  }
-  
-  modal.style.display = 'block';
-} 
+ 
