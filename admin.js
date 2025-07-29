@@ -587,92 +587,9 @@ function exportData() {
   showNotification('Data export feature coming soon!');
 } 
 
-// Image upload functions
-function previewImage(input) {
-  const file = input.files[0];
-  const preview = document.getElementById('image-preview');
-  const urlInput = document.getElementById('item-image');
-  
-  if (file) {
-    // Check file size (5MB limit)
-    if (file.size > 5 * 1024 * 1024) {
-      showNotification('File size must be less than 5MB', 'error');
-      input.value = '';
-      return;
-    }
-    
-    // Check file type
-    if (!file.type.startsWith('image/')) {
-      showNotification('Please select an image file', 'error');
-      input.value = '';
-      return;
-    }
-    
-    const reader = new FileReader();
-    reader.onload = function(e) {
-      preview.innerHTML = `
-        <img src="${e.target.result}" alt="Preview">
-        <button type="button" class="remove-image" onclick="removeImage()">
-          <i class="fas fa-times"></i>
-        </button>
-      `;
-      preview.classList.add('has-image');
-      
-      // Convert to base64 and set as URL
-      urlInput.value = e.target.result;
-    };
-    reader.readAsDataURL(file);
-  }
-}
 
-function removeImage() {
-  const preview = document.getElementById('image-preview');
-  const fileInput = document.getElementById('item-image-file');
-  const urlInput = document.getElementById('item-image');
-  
-  preview.innerHTML = `
-    <i class="fas fa-cloud-upload-alt"></i>
-    <p>Click to upload image or drag & drop</p>
-    <p class="upload-hint">Supports: JPG, PNG, GIF (Max 5MB)</p>
-  `;
-  preview.classList.remove('has-image');
-  fileInput.value = '';
-  urlInput.value = '';
-}
 
-// Drag and drop functionality
-function setupDragAndDrop() {
-  const preview = document.getElementById('image-preview');
-  const fileInput = document.getElementById('item-image-file');
-  
-  if (!preview || !fileInput) return;
-  
-  preview.addEventListener('dragover', function(e) {
-    e.preventDefault();
-    preview.style.borderColor = '#667eea';
-    preview.style.background = '#f0f4ff';
-  });
-  
-  preview.addEventListener('dragleave', function(e) {
-    e.preventDefault();
-    preview.style.borderColor = '#ddd';
-    preview.style.background = '#f9f9f9';
-  });
-  
-  preview.addEventListener('drop', function(e) {
-    e.preventDefault();
-    preview.style.borderColor = '#ddd';
-    preview.style.background = '#f9f9f9';
-    
-    const files = e.dataTransfer.files;
-    if (files.length > 0) {
-      fileInput.files = files;
-      previewImage(fileInput);
-    }
-  });
-}
-
-// Initialize drag and drop when modal opens
+// Initialize modal
 function openModal(item = null) {
   const modal = document.getElementById('modal');
   const modalTitle = document.getElementById('modal-title');
@@ -682,7 +599,6 @@ function openModal(item = null) {
   const priceInput = document.getElementById('item-price');
   const categoryInput = document.getElementById('item-category');
   const descriptionInput = document.getElementById('item-description');
-  const imageInput = document.getElementById('item-image');
   
   if (item) {
     modalTitle.textContent = 'Edit Menu Item';
@@ -691,25 +607,10 @@ function openModal(item = null) {
     priceInput.value = item.price;
     categoryInput.value = item.category;
     descriptionInput.value = item.description || '';
-    imageInput.value = item.image_url || '';
-    
-    // Show image preview if URL exists
-    if (item.image_url) {
-      const preview = document.getElementById('image-preview');
-      preview.innerHTML = `
-        <img src="${item.image_url}" alt="Preview">
-        <button type="button" class="remove-image" onclick="removeImage()">
-          <i class="fas fa-times"></i>
-        </button>
-      `;
-      preview.classList.add('has-image');
-    }
   } else {
     modalTitle.textContent = 'Add Menu Item';
     form.reset();
-    removeImage();
   }
   
   modal.style.display = 'block';
-  setupDragAndDrop();
 } 
