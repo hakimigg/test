@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Redirecting...</title>
+</head>
+<body>
+    <script>
+        // Handle /admin route on GitHub Pages
+        const path = window.location.pathname;
+        
+        if (path === '/test/admin' || path === '/admin') {
+            // Redirect to admin.html
+            window.location.href = 'admin.html';
+        } else {
+            // For other 404s, redirect to main page
+            window.location.href = 'index.html';
+        }
+    </script>
+    <p>Redirecting...</p>
+</body>
+</html> 
