@@ -2,6 +2,78 @@ const supabaseUrl = 'https://oaocunkolrastdfoyslv.supabase.co';
 const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9hb2N1bmtvbHJhc3RkZm95c2x2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTM4MTcyMzksImV4cCI6MjA2OTM5MzIzOX0.osmL83G7FFDPV1Fy0I2-Pbk5hakuoxZjyQwMVoxJcfY';
 const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
 
+// Custom notification function for main website
+function showCustomNotification(message, type = 'success', title = null) {
+  // Remove any existing notifications
+  const existingNotifications = document.querySelectorAll('.custom-notification');
+  existingNotifications.forEach(notification => {
+    notification.classList.remove('show');
+    setTimeout(() => {
+      if (notification.parentNode) {
+        notification.parentNode.removeChild(notification);
+      }
+    }, 400);
+  });
+
+  // Create notification element
+  const notification = document.createElement('div');
+  notification.className = `custom-notification ${type}`;
+  
+  // Set icon and colors based on type
+  let icon, notificationTitle;
+  switch(type) {
+    case 'success':
+      icon = 'fa-check-circle';
+      notificationTitle = title || 'Success!';
+      break;
+    case 'error':
+      icon = 'fa-exclamation-triangle';
+      notificationTitle = title || 'Error!';
+      break;
+    case 'info':
+      icon = 'fa-info-circle';
+      notificationTitle = title || 'Information';
+      break;
+    case 'warning':
+      icon = 'fa-exclamation-circle';
+      notificationTitle = title || 'Warning!';
+      break;
+    default:
+      icon = 'fa-info-circle';
+      notificationTitle = title || 'Notification';
+  }
+  
+  notification.innerHTML = `
+    <div class="notification-icon">
+      <i class="fas ${icon}"></i>
+    </div>
+    <div class="notification-content">
+      <div class="notification-title">${notificationTitle}</div>
+      <div class="notification-message">${message}</div>
+    </div>
+    <button class="notification-close" onclick="this.parentElement.classList.remove('show'); setTimeout(() => { if(this.parentElement.parentNode) this.parentElement.parentNode.removeChild(this.parentElement); }, 400);">
+      <i class="fas fa-times"></i>
+    </button>
+  `;
+  
+  document.body.appendChild(notification);
+  
+  // Animate in
+  setTimeout(() => {
+    notification.classList.add('show');
+  }, 100);
+  
+  // Auto remove after 4 seconds
+  setTimeout(() => {
+    notification.classList.remove('show');
+    setTimeout(() => {
+      if (notification.parentNode) {
+        notification.parentNode.removeChild(notification);
+      }
+    }, 400);
+  }, 4000);
+}
+
 async function loadMenuItems() {
   try {
     const { data, error } = await supabase
@@ -58,11 +130,12 @@ async function submitContactForm(formData) {
     
     if (error) throw error;
     
-    alert('Thank you! Your message has been sent successfully.');
+    // Use custom notification instead of alert
+    showCustomNotification('Thank you! Your message has been sent successfully.', 'success', 'Message Sent');
     return true;
   } catch (error) {
     console.error('Error submitting form:', error);
-    alert('Sorry, there was an error sending your message. Please try again.');
+    showCustomNotification('Sorry, there was an error sending your message. Please try again.', 'error', 'Send Failed');
     return false;
   }
 }

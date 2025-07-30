@@ -179,6 +179,94 @@ function showNotification(message, type = 'success', title = null) {
   }, 4000);
 }
 
+// Custom alert dialog function
+function showAlert(message, title = 'Alert', type = 'info') {
+  return new Promise((resolve) => {
+    // Remove any existing alert dialogs
+    const existingAlerts = document.querySelectorAll('.alert-overlay');
+    existingAlerts.forEach(alert => {
+      if (alert.parentNode) {
+        alert.parentNode.removeChild(alert);
+      }
+    });
+
+    // Create alert dialog
+    const overlay = document.createElement('div');
+    overlay.className = 'alert-overlay';
+    
+    let icon, iconClass;
+    switch(type) {
+      case 'error':
+        icon = 'fa-exclamation-triangle';
+        iconClass = 'danger';
+        break;
+      case 'warning':
+        icon = 'fa-exclamation-circle';
+        iconClass = 'warning';
+        break;
+      case 'success':
+        icon = 'fa-check-circle';
+        iconClass = 'success';
+        break;
+      case 'info':
+      default:
+        icon = 'fa-info-circle';
+        iconClass = 'info';
+    }
+    
+    overlay.innerHTML = `
+      <div class="alert-dialog">
+        <div class="alert-icon ${iconClass}">
+          <i class="fas ${icon}"></i>
+        </div>
+        <div class="alert-title">${title}</div>
+        <div class="alert-message">${message}</div>
+        <div class="alert-actions">
+          <button class="alert-btn ok">OK</button>
+        </div>
+      </div>
+    `;
+    
+    document.body.appendChild(overlay);
+    
+    // Show the dialog
+    setTimeout(() => {
+      overlay.classList.add('show');
+    }, 10);
+    
+    // Handle button click
+    const okBtn = overlay.querySelector('.alert-btn.ok');
+    
+    const closeDialog = () => {
+      overlay.classList.remove('show');
+      setTimeout(() => {
+        if (overlay.parentNode) {
+          overlay.parentNode.removeChild(overlay);
+        }
+        resolve();
+      }, 300);
+    };
+    
+    okBtn.addEventListener('click', closeDialog);
+    
+    // Handle escape key
+    const handleEscape = (e) => {
+      if (e.key === 'Escape') {
+        closeDialog();
+        document.removeEventListener('keydown', handleEscape);
+      }
+    };
+    document.addEventListener('keydown', handleEscape);
+    
+    // Handle clicking outside the dialog
+    overlay.addEventListener('click', (e) => {
+      if (e.target === overlay) {
+        closeDialog();
+      }
+    });
+  });
+}
+
 // Custom confirmation dialog function
 function showConfirmation(message, title = 'Confirm Action', type = 'warning', confirmText = 'Confirm', cancelText = 'Cancel') {
   return new Promise((resolve) => {
@@ -851,12 +939,17 @@ function exportContacts() {
   showNotification('Contacts exported successfully!');
 }
 
-function changePassword() {
-  const newPassword = prompt('Enter new admin password:');
+async function changePassword() {
+  const newPassword = await showAlert(
+    'Enter new admin password:',
+    'Change Password',
+    'info'
+  );
+  
   if (newPassword && newPassword.length >= 6) {
-    showNotification('Password changed successfully! (Note: This is a demo - password is not actually saved)');
+    showNotification('Password changed successfully! (Note: This is a demo - password is not actually saved)', 'success', 'Password Updated');
   } else if (newPassword) {
-    showNotification('Password must be at least 6 characters', 'error');
+    showNotification('Password must be at least 6 characters', 'error', 'Invalid Password');
   }
 }
 
