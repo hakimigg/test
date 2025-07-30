@@ -108,26 +108,75 @@ function showDashboard() {
   loadDashboardData();
 }
 
-function showNotification(message, type = 'success') {
+function showNotification(message, type = 'success', title = null) {
+  // Remove any existing notifications
+  const existingNotifications = document.querySelectorAll('.notification');
+  existingNotifications.forEach(notification => {
+    notification.classList.remove('show');
+    setTimeout(() => {
+      if (notification.parentNode) {
+        notification.parentNode.removeChild(notification);
+      }
+    }, 400);
+  });
+
+  // Create notification element
   const notification = document.createElement('div');
   notification.className = `notification ${type}`;
+  
+  // Set icon and colors based on type
+  let icon, notificationTitle;
+  switch(type) {
+    case 'success':
+      icon = 'fa-check-circle';
+      notificationTitle = title || 'Success!';
+      break;
+    case 'error':
+      icon = 'fa-exclamation-triangle';
+      notificationTitle = title || 'Error!';
+      break;
+    case 'info':
+      icon = 'fa-info-circle';
+      notificationTitle = title || 'Information';
+      break;
+    case 'warning':
+      icon = 'fa-exclamation-circle';
+      notificationTitle = title || 'Warning!';
+      break;
+    default:
+      icon = 'fa-info-circle';
+      notificationTitle = title || 'Notification';
+  }
+  
   notification.innerHTML = `
-    <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'}"></i>
-    <span>${message}</span>
+    <div class="notification-icon">
+      <i class="fas ${icon}"></i>
+    </div>
+    <div class="notification-content">
+      <div class="notification-title">${notificationTitle}</div>
+      <div class="notification-message">${message}</div>
+    </div>
+    <button class="notification-close" onclick="this.parentElement.classList.remove('show'); setTimeout(() => { if(this.parentElement.parentNode) this.parentElement.parentNode.removeChild(this.parentElement); }, 400);">
+      <i class="fas fa-times"></i>
+    </button>
   `;
   
   document.body.appendChild(notification);
   
+  // Animate in
   setTimeout(() => {
     notification.classList.add('show');
   }, 100);
   
+  // Auto remove after 4 seconds
   setTimeout(() => {
     notification.classList.remove('show');
     setTimeout(() => {
-      document.body.removeChild(notification);
-    }, 300);
-  }, 3000);
+      if (notification.parentNode) {
+        notification.parentNode.removeChild(notification);
+      }
+    }, 400);
+  }, 4000);
 }
 
 async function loadDashboardData() {
@@ -498,7 +547,11 @@ async function handleMenuSubmit(e) {
       throw result.error;
     }
     
-    showNotification(itemId ? 'Menu item updated successfully!' : 'Menu item added successfully!');
+    showNotification(
+      itemId ? 'Your menu item has been updated successfully.' : 'New menu item has been added successfully.',
+      'success',
+      itemId ? 'Menu Item Updated' : 'Menu Item Added'
+    );
     closeModal();
     loadMenuItems();
   } catch (error) {
@@ -515,7 +568,7 @@ async function handleMenuSubmit(e) {
       errorMessage += ' - ' + error.details;
     }
     
-    showNotification(errorMessage, 'error');
+    showNotification('There was an error saving your menu item. Please try again.', 'error', 'Save Failed');
   }
 }
 
@@ -549,21 +602,25 @@ async function handlePromoSubmit(e) {
     
     if (result.error) {
       if (result.error.code === 'PGRST116' || result.error.code === 'PGRST205') {
-        showNotification('Promotions table not found. Please create the promotions table in Supabase first.', 'error');
+        showNotification('Promotions table not found. Please create the promotions table in Supabase first.', 'error', 'Table Missing');
         return;
       }
       throw result.error;
     }
     
-    showNotification(promoId ? 'Promotion updated successfully!' : 'Promotion added successfully!');
+    showNotification(
+      promoId ? 'Your promotion has been updated successfully.' : 'New promotion has been added successfully.',
+      'success',
+      promoId ? 'Promotion Updated' : 'Promotion Added'
+    );
     closePromoModal();
     loadPromotions();
   } catch (error) {
     console.error('Error saving promotion:', error);
     if (error.code === 'PGRST116' || error.code === 'PGRST205') {
-      showNotification('Promotions table not found. Please create the promotions table in Supabase first.', 'error');
+      showNotification('Promotions table not found. Please create the promotions table in Supabase first.', 'error', 'Table Missing');
     } else {
-      showNotification('Error saving promotion', 'error');
+      showNotification('There was an error saving your promotion. Please try again.', 'error', 'Save Failed');
     }
   }
 }
