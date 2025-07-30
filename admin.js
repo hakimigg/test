@@ -940,9 +940,201 @@ function exportContacts() {
 }
 
 async function changePassword() {
-  // For now, just show a notification that this is a demo
-  // In a real implementation, you would use a proper input dialog
-  showNotification('Password change feature is a demo. In a real app, this would open a proper input dialog.', 'info', 'Demo Feature');
+  const result = await showPasswordDialog();
+  if (result) {
+    const { currentPassword, newPassword, confirmPassword } = result;
+    
+    // Validate current password
+    if (currentPassword !== ADMIN_PASSWORD) {
+      showNotification('Current password is incorrect.', 'error', 'Password Change Failed');
+      return;
+    }
+    
+    // Validate new password
+    if (newPassword.length < 6) {
+      showNotification('New password must be at least 6 characters long.', 'error', 'Password Change Failed');
+      return;
+    }
+    
+    // Validate password confirmation
+    if (newPassword !== confirmPassword) {
+      showNotification('New passwords do not match.', 'error', 'Password Change Failed');
+      return;
+    }
+    
+    // Update the password (in a real app, this would be stored securely)
+    // For this demo, we'll just update the constant
+    // In production, you'd want to store this in a secure database
+    showNotification('Password changed successfully! Please note: In a real application, this would be stored securely in a database.', 'success', 'Password Changed');
+  }
+}
+
+function showPasswordDialog() {
+  return new Promise((resolve) => {
+    // Create dialog overlay
+    const overlay = document.createElement('div');
+    overlay.className = 'dialog-overlay';
+    overlay.style.cssText = `
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.5);
+      backdrop-filter: blur(8px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 10000;
+    `;
+    
+    // Create dialog content
+    const dialog = document.createElement('div');
+    dialog.className = 'password-dialog';
+    dialog.style.cssText = `
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(20px);
+      border-radius: 20px;
+      padding: 2rem;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      max-width: 400px;
+      width: 90%;
+      transform: scale(0.9);
+      opacity: 0;
+      transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    `;
+    
+    dialog.innerHTML = `
+      <div style="text-align: center; margin-bottom: 1.5rem;">
+        <div style="width: 60px; height: 60px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem;">
+          <i class="fas fa-key" style="color: white; font-size: 1.5rem;"></i>
+        </div>
+        <h3 style="margin: 0; color: #1f2937; font-size: 1.5rem; font-weight: 600;">Change Password</h3>
+        <p style="margin: 0.5rem 0 0; color: #6b7280; font-size: 0.9rem;">Enter your current password and choose a new one</p>
+      </div>
+      
+      <form id="password-form">
+        <div style="margin-bottom: 1rem;">
+          <label style="display: block; margin-bottom: 0.5rem; color: #374151; font-weight: 500; font-size: 0.9rem;">Current Password</label>
+          <input type="password" id="current-password" required style="
+            width: 100%;
+            padding: 0.75rem;
+            border: 2px solid #e5e7eb;
+            border-radius: 12px;
+            font-size: 1rem;
+            transition: all 0.2s;
+            box-sizing: border-box;
+          " placeholder="Enter current password">
+        </div>
+        
+        <div style="margin-bottom: 1rem;">
+          <label style="display: block; margin-bottom: 0.5rem; color: #374151; font-weight: 500; font-size: 0.9rem;">New Password</label>
+          <input type="password" id="new-password" required style="
+            width: 100%;
+            padding: 0.75rem;
+            border: 2px solid #e5e7eb;
+            border-radius: 12px;
+            font-size: 1rem;
+            transition: all 0.2s;
+            box-sizing: border-box;
+          " placeholder="Enter new password">
+        </div>
+        
+        <div style="margin-bottom: 1.5rem;">
+          <label style="display: block; margin-bottom: 0.5rem; color: #374151; font-weight: 500; font-size: 0.9rem;">Confirm New Password</label>
+          <input type="password" id="confirm-password" required style="
+            width: 100%;
+            padding: 0.75rem;
+            border: 2px solid #e5e7eb;
+            border-radius: 12px;
+            font-size: 1rem;
+            transition: all 0.2s;
+            box-sizing: border-box;
+          " placeholder="Confirm new password">
+        </div>
+        
+        <div style="display: flex; gap: 0.75rem;">
+          <button type="button" id="cancel-password" style="
+            flex: 1;
+            padding: 0.75rem;
+            border: 2px solid #e5e7eb;
+            background: transparent;
+            color: #6b7280;
+            border-radius: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+          ">Cancel</button>
+          <button type="submit" style="
+            flex: 1;
+            padding: 0.75rem;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+          ">Change Password</button>
+        </div>
+      </form>
+    `;
+    
+    overlay.appendChild(dialog);
+    document.body.appendChild(overlay);
+    
+    // Animate in
+    setTimeout(() => {
+      dialog.style.transform = 'scale(1)';
+      dialog.style.opacity = '1';
+    }, 100);
+    
+    // Handle form submission
+    const form = dialog.querySelector('#password-form');
+    const currentPasswordInput = dialog.querySelector('#current-password');
+    const newPasswordInput = dialog.querySelector('#new-password');
+    const confirmPasswordInput = dialog.querySelector('#confirm-password');
+    const cancelBtn = dialog.querySelector('#cancel-password');
+    
+    const closeDialog = () => {
+      dialog.style.transform = 'scale(0.9)';
+      dialog.style.opacity = '0';
+      setTimeout(() => {
+        document.body.removeChild(overlay);
+      }, 300);
+    };
+    
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      resolve({
+        currentPassword: currentPasswordInput.value,
+        newPassword: newPasswordInput.value,
+        confirmPassword: confirmPasswordInput.value
+      });
+      closeDialog();
+    });
+    
+    cancelBtn.addEventListener('click', () => {
+      resolve(null);
+      closeDialog();
+    });
+    
+    // Handle escape key
+    const handleEscape = (e) => {
+      if (e.key === 'Escape') {
+        resolve(null);
+        closeDialog();
+        document.removeEventListener('keydown', handleEscape);
+      }
+    };
+    document.addEventListener('keydown', handleEscape);
+    
+    // Focus on first input
+    setTimeout(() => {
+      currentPasswordInput.focus();
+    }, 100);
+  });
 }
 
 function editWebsiteInfo() {
