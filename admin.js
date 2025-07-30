@@ -179,6 +179,96 @@ function showNotification(message, type = 'success', title = null) {
   }, 4000);
 }
 
+// Custom confirmation dialog function
+function showConfirmation(message, title = 'Confirm Action', type = 'warning', confirmText = 'Confirm', cancelText = 'Cancel') {
+  return new Promise((resolve) => {
+    // Remove any existing confirmation dialogs
+    const existingDialogs = document.querySelectorAll('.confirmation-overlay');
+    existingDialogs.forEach(dialog => {
+      if (dialog.parentNode) {
+        dialog.parentNode.removeChild(dialog);
+      }
+    });
+
+    // Create confirmation dialog
+    const overlay = document.createElement('div');
+    overlay.className = 'confirmation-overlay';
+    
+    let icon, iconClass;
+    switch(type) {
+      case 'danger':
+        icon = 'fa-exclamation-triangle';
+        iconClass = 'danger';
+        break;
+      case 'warning':
+        icon = 'fa-exclamation-circle';
+        iconClass = 'warning';
+        break;
+      case 'info':
+        icon = 'fa-info-circle';
+        iconClass = 'info';
+        break;
+      default:
+        icon = 'fa-question-circle';
+        iconClass = 'warning';
+    }
+    
+    overlay.innerHTML = `
+      <div class="confirmation-dialog">
+        <div class="confirmation-icon ${iconClass}">
+          <i class="fas ${icon}"></i>
+        </div>
+        <div class="confirmation-title">${title}</div>
+        <div class="confirmation-message">${message}</div>
+        <div class="confirmation-actions">
+          <button class="confirmation-btn cancel">${cancelText}</button>
+          <button class="confirmation-btn confirm ${type}">${confirmText}</button>
+        </div>
+      </div>
+    `;
+    
+    document.body.appendChild(overlay);
+    
+    // Show the dialog
+    setTimeout(() => {
+      overlay.classList.add('show');
+    }, 10);
+    
+    // Handle button clicks
+    const cancelBtn = overlay.querySelector('.confirmation-btn.cancel');
+    const confirmBtn = overlay.querySelector('.confirmation-btn.confirm');
+    
+    const closeDialog = (result) => {
+      overlay.classList.remove('show');
+      setTimeout(() => {
+        if (overlay.parentNode) {
+          overlay.parentNode.removeChild(overlay);
+        }
+        resolve(result);
+      }, 300);
+    };
+    
+    cancelBtn.addEventListener('click', () => closeDialog(false));
+    confirmBtn.addEventListener('click', () => closeDialog(true));
+    
+    // Handle escape key
+    const handleEscape = (e) => {
+      if (e.key === 'Escape') {
+        closeDialog(false);
+        document.removeEventListener('keydown', handleEscape);
+      }
+    };
+    document.addEventListener('keydown', handleEscape);
+    
+    // Handle clicking outside the dialog
+    overlay.addEventListener('click', (e) => {
+      if (e.target === overlay) {
+        closeDialog(false);
+      }
+    });
+  });
+}
+
 async function loadDashboardData() {
   await Promise.all([
     loadMenuItems(),
@@ -655,7 +745,15 @@ async function editMenuItem(id) {
 }
 
 async function deleteMenuItem(id) {
-  if (!confirm('Are you sure you want to delete this menu item?')) return;
+  const confirmed = await showConfirmation(
+    'Are you sure you want to delete this menu item? This action cannot be undone.',
+    'Delete Menu Item',
+    'danger',
+    'Delete',
+    'Cancel'
+  );
+  
+  if (!confirmed) return;
   
   try {
     const { error } = await supabase
@@ -673,11 +771,11 @@ async function deleteMenuItem(id) {
       if (altError) throw altError;
     }
     
-    showNotification('Menu item deleted successfully!');
+    showNotification('Menu item has been deleted successfully.', 'success', 'Item Deleted');
     loadMenuItems();
   } catch (error) {
     console.error('Error deleting menu item:', error);
-    showNotification('Error deleting menu item', 'error');
+    showNotification('There was an error deleting the menu item. Please try again.', 'error', 'Delete Failed');
   }
 }
 
@@ -699,7 +797,15 @@ async function editPromotion(id) {
 }
 
 async function deletePromotion(id) {
-  if (!confirm('Are you sure you want to delete this promotion?')) return;
+  const confirmed = await showConfirmation(
+    'Are you sure you want to delete this promotion? This action cannot be undone.',
+    'Delete Promotion',
+    'danger',
+    'Delete',
+    'Cancel'
+  );
+  
+  if (!confirmed) return;
   
   try {
     const { error } = await supabase
@@ -709,11 +815,11 @@ async function deletePromotion(id) {
     
     if (error) throw error;
     
-    showNotification('Promotion deleted successfully!');
+    showNotification('Promotion has been deleted successfully.', 'success', 'Promotion Deleted');
     loadPromotions();
   } catch (error) {
     console.error('Error deleting promotion:', error);
-    showNotification('Error deleting promotion', 'error');
+    showNotification('There was an error deleting the promotion. Please try again.', 'error', 'Delete Failed');
   }
 }
 
