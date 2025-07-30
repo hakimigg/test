@@ -473,42 +473,49 @@ async function handleMenuSubmit(e) {
   
   const itemId = document.getElementById('item-id').value;
   
+  console.log('Submitting form data:', formData);
+  console.log('Item ID:', itemId);
+  
   try {
     let result;
     if (itemId) {
+      console.log('Updating existing item...');
       result = await supabase
         .from('menu_items')
         .update(formData)
         .eq('id', itemId);
-      
-      // If menu_items doesn't work, try 'menu'
-      if (result.error && (result.error.code === 'PGRST116' || result.error.code === 'PGRST205')) {
-        result = await supabase
-          .from('menu')
-          .update(formData)
-          .eq('id', itemId);
-      }
     } else {
+      console.log('Inserting new item...');
       result = await supabase
         .from('menu_items')
         .insert([formData]);
-      
-      // If menu_items doesn't work, try 'menu'
-      if (result.error && (result.error.code === 'PGRST116' || result.error.code === 'PGRST205')) {
-        result = await supabase
-          .from('menu')
-          .insert([formData]);
-      }
     }
     
-    if (result.error) throw result.error;
+    console.log('Supabase result:', result);
+    
+    if (result.error) {
+      console.error('Supabase error details:', result.error);
+      throw result.error;
+    }
     
     showNotification(itemId ? 'Menu item updated successfully!' : 'Menu item added successfully!');
     closeModal();
     loadMenuItems();
   } catch (error) {
     console.error('Error saving menu item:', error);
-    showNotification('Error saving menu item', 'error');
+    console.error('Error code:', error.code);
+    console.error('Error message:', error.message);
+    console.error('Error details:', error.details);
+    
+    let errorMessage = 'Error saving menu item';
+    if (error.message) {
+      errorMessage += ': ' + error.message;
+    }
+    if (error.details) {
+      errorMessage += ' - ' + error.details;
+    }
+    
+    showNotification(errorMessage, 'error');
   }
 }
 
