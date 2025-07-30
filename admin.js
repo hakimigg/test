@@ -1,5 +1,28 @@
-const supabaseUrl = 'https://oaocunkolrastdfoyslv.supabase.co';
-const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9hb2N1bmtvbHJhc3RkZm95c2x2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTM4MTcyMzksImV4cCI6MjA2OTM5MzIzOX0.osmL83G7FFDPV1Fy0I2-Pbk5hakuoxZjyQwMVoxJcfY';
+// Get Supabase credentials from the main website's configuration
+let supabaseUrl, supabaseKey;
+
+// Try to get credentials from the main site's script or use fallback
+try {
+  // Check if we can access the main site's Supabase client
+  if (window.parent && window.parent !== window) {
+    // We're in an iframe, try to get from parent
+    supabaseUrl = window.parent.supabaseUrl;
+    supabaseKey = window.parent.supabaseKey;
+  }
+  
+  // Fallback: try to detect from current domain or use environment
+  if (!supabaseUrl) {
+    // Your actual Supabase project credentials
+    supabaseUrl = 'https://oaocunkolrastdfoyslv.supabase.co';
+    supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9hb2N1bmtvbHJhc3RkZm95c2x2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTM4MTcyMzksImV4cCI6MjA2OTM5MzIzOX0.osmL83G7FFDPV1Fy0I2-Pbk5hakuoxZjyQwMVoxJcfY';
+  }
+} catch (error) {
+  console.error('Error getting Supabase credentials:', error);
+  // Fallback credentials - your actual ones
+  supabaseUrl = 'https://oaocunkolrastdfoyslv.supabase.co';
+  supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9hb2N1bmtvbHJhc3RkZm95c2x2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTM4MTcyMzksImV4cCI6MjA2OTM5MzIzOX0.osmL83G7FFDPV1Fy0I2-Pbk5hakuoxZjyQwMVoxJcfY';
+}
+
 const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
 
 const ADMIN_PASSWORD = 'admin123';
@@ -140,17 +163,39 @@ function switchTab(tabName) {
 
 async function loadMenuItems() {
   try {
+    // First, let's check what tables exist
+    console.log('Attempting to load menu items...');
+    
     const { data, error } = await supabase
       .from('menu_items')
       .select('*')
       .order('category', { ascending: true });
     
-    if (error) throw error;
+    if (error) {
+      console.error('Error loading menu items:', error);
+      // Try alternative table names
+      const { data: altData, error: altError } = await supabase
+        .from('menu')
+        .select('*')
+        .order('category', { ascending: true });
+      
+      if (altError) {
+        console.error('Error loading from menu table:', altError);
+        showNotification('Menu table not found. Please check your database setup.', 'error');
+        displayMenuItems([]);
+        return;
+      }
+      
+      displayMenuItems(altData || []);
+      return;
+    }
     
+    console.log('Menu items loaded:', data);
     displayMenuItems(data || []);
   } catch (error) {
     console.error('Error loading menu items:', error);
     showNotification('Error loading menu items', 'error');
+    displayMenuItems([]);
   }
 }
 
@@ -435,10 +480,25 @@ async function handleMenuSubmit(e) {
         .from('menu_items')
         .update(formData)
         .eq('id', itemId);
+      
+      // If menu_items doesn't work, try 'menu'
+      if (result.error && (result.error.code === 'PGRST116' || result.error.code === 'PGRST205')) {
+        result = await supabase
+          .from('menu')
+          .update(formData)
+          .eq('id', itemId);
+      }
     } else {
       result = await supabase
         .from('menu_items')
         .insert([formData]);
+      
+      // If menu_items doesn't work, try 'menu'
+      if (result.error && (result.error.code === 'PGRST116' || result.error.code === 'PGRST205')) {
+        result = await supabase
+          .from('menu')
+          .insert([formData]);
+      }
     }
     
     if (result.error) throw result.error;
@@ -509,7 +569,19 @@ async function editMenuItem(id) {
       .eq('id', id)
       .single();
     
-    if (error) throw error;
+    if (error) {
+      // Try alternative table name
+      const { data: altData, error: altError } = await supabase
+        .from('menu')
+        .select('*')
+        .eq('id', id)
+        .single();
+      
+      if (altError) throw altError;
+      
+      openModal(altData);
+      return;
+    }
     
     openModal(data);
   } catch (error) {
@@ -527,7 +599,15 @@ async function deleteMenuItem(id) {
       .delete()
       .eq('id', id);
     
-    if (error) throw error;
+    if (error) {
+      // Try alternative table name
+      const { error: altError } = await supabase
+        .from('menu')
+        .delete()
+        .eq('id', id);
+      
+      if (altError) throw altError;
+    }
     
     showNotification('Menu item deleted successfully!');
     loadMenuItems();

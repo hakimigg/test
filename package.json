@@ -1,16 +1,15 @@
 {
-  "name": "restaurant-admin",
+  "name": "restaurant-admin-panel",
   "version": "1.0.0",
-  "description": "Restaurant website with admin panel",
-  "main": "server.js",
+  "description": "Admin panel for a restaurant website",
+  "main": "index.js",
   "scripts": {
-    "start": "node server.js",
-    "dev": "node server.js"
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
   "dependencies": {
-    "express": "^4.18.2"
+    "@supabase/supabase-js": "^2.0.0"
   },
-  "keywords": ["restaurant", "admin", "website"],
+  "keywords": ["restaurant", "admin", "panel"],
   "author": "",
-  "license": "MIT"
-} 
+  "license": "ISC"
+}
