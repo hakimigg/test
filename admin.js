@@ -940,17 +940,9 @@ function exportContacts() {
 }
 
 async function changePassword() {
-  const newPassword = await showAlert(
-    'Enter new admin password:',
-    'Change Password',
-    'info'
-  );
-  
-  if (newPassword && newPassword.length >= 6) {
-    showNotification('Password changed successfully! (Note: This is a demo - password is not actually saved)', 'success', 'Password Updated');
-  } else if (newPassword) {
-    showNotification('Password must be at least 6 characters', 'error', 'Invalid Password');
-  }
+  // For now, just show a notification that this is a demo
+  // In a real implementation, you would use a proper input dialog
+  showNotification('Password change feature is a demo. In a real app, this would open a proper input dialog.', 'info', 'Demo Feature');
 }
 
 function editWebsiteInfo() {
@@ -959,8 +951,4 @@ function editWebsiteInfo() {
 
 function exportData() {
   showNotification('Data export feature coming soon!');
-} 
-
-
-
- 
+}
