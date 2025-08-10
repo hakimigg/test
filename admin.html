@@ -382,6 +382,8 @@ document.addEventListener("DOMContentLoaded", function() {
 function showLoginDashboard() {
   document.getElementById("login-section").style.display = "none";
   document.getElementById("admin-dashboard").style.display = "block";
+  // Load dashboard data after showing the dashboard
+  loadDashboardData();
 }
              </script>
 </body>
