@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Restaurant Admin Panel</title>
+  <link rel="stylesheet" href="admin.css?v=6">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+  <link rel="icon" type="image/x-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🍽️</text></svg>">
+</head>
+<body>
+  <div id="login-section" class="login-section">
+    <div class="login-container">
+      <div class="login-header">
+        <i class="fas fa-utensils"></i>
+        <h1>Restaurant Admin</h1>
+        <p>Manage your restaurant content</p>
+      </div>
+      <form id="login-form">
+        <div class="input-group">
+          <i class="fas fa-user"></i>
+          <input type="text" id="admin-username" placeholder="Nom d'utilisateur" required>
+        </div>
+        <div class="input-group">
+          <i class="fas fa-lock"></i>
+          <input type="password" id="admin-password" placeholder="Mot de passe" required>
+        </div>
+        <button type="submit">
+          <i class="fas fa-sign-in-alt"></i>
+          Login
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <div id="admin-dashboard" class="admin-dashboard" style="display: none;">
+    <nav class="admin-nav">
+      <div class="nav-brand">
+        <i class="fas fa-utensils"></i>
+        <h2>Restaurant Admin Panel</h2>
+      </div>
+      <div class="nav-actions">
+        <span id="current-time"></span>
+        <button id="logout-btn">
+          <i class="fas fa-sign-out-alt"></i>
+          Logout
+        </button>
+      </div>
+    </nav>
+    
+    <div class="admin-content">
+      <div class="sidebar">
+        <div class="sidebar-header">
+          <h3>Dashboard</h3>
+        </div>
+        <button class="tab-btn active" data-tab="overview">
+          <i class="fas fa-chart-line"></i>
+          Overview
+        </button>
+        <button class="tab-btn" data-tab="menu">
+          <i class="fas fa-list"></i>
+          Menu Management
+        </button>
+        <button class="tab-btn" data-tab="promotions">
+          <i class="fas fa-percentage"></i>
+          Promotions
+        </button>
+        <button class="tab-btn" data-tab="contacts">
+          <i class="fas fa-envelope"></i>
+          Contact Submissions
+        </button>
+        <button class="tab-btn" data-tab="settings">
+          <i class="fas fa-cog"></i>
+          Settings
+        </button>
+      </div>
+      
+      <div class="main-content">
+        <div id="overview-tab" class="tab-content active">
+          <div class="dashboard-header">
+            <h3>Dashboard Overview</h3>
+            <p>Welcome to your restaurant management dashboard</p>
+          </div>
+          <div class="stats-grid">
+            <div class="stat-card">
+              <div class="stat-icon">
+                <i class="fas fa-list"></i>
+              </div>
+              <div class="stat-info">
+                <h4 id="menu-count">0</h4>
+                <p>Menu Items</p>
+              </div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon">
+                <i class="fas fa-percentage"></i>
+              </div>
+              <div class="stat-info">
+                <h4 id="promo-count">0</h4>
+                <p>Active Promotions</p>
+              </div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon">
+                <i class="fas fa-envelope"></i>
+              </div>
+              <div class="stat-info">
+                <h4 id="contact-count">0</h4>
+                <p>New Messages</p>
+              </div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon">
+                <i class="fas fa-eye"></i>
+              </div>
+              <div class="stat-info">
+                <h4>Live</h4>
+                <p>Website Status</p>
+              </div>
+            </div>
+          </div>
+          <div class="quick-actions">
+            <h4>Quick Actions</h4>
+            <div class="action-buttons">
+              <button class="action-btn" onclick="switchTab('menu')">
+                <i class="fas fa-plus"></i>
+                Add Menu Item
+              </button>
+              <button class="action-btn" onclick="switchTab('promotions')">
+                <i class="fas fa-percentage"></i>
+                Create Promotion
+              </button>
+              <button class="action-btn" onclick="switchTab('contacts')">
+                <i class="fas fa-envelope"></i>
+                View Messages
+              </button>
+            </div>
+          </div>
+        </div>
+        
+        <div id="menu-tab" class="tab-content">
+          <div class="section-header">
+            <div>
+              <h3>Menu Management</h3>
+              <p>Manage your restaurant menu items</p>
+            </div>
+            <button id="add-menu-btn" class="btn-primary">
+              <i class="fas fa-plus"></i>
+              Add New Item
+            </button>
+          </div>
+          <div class="filters">
+            <select id="category-filter">
+              <option value="">All Categories</option>
+              <option value="Starters">Starters</option>
+              <option value="Main Dishes">Main Dishes</option>
+              <option value="Desserts">Desserts</option>
+              <option value="Drinks">Drinks</option>
+            </select>
+            <input type="text" id="search-menu" placeholder="Search menu items...">
+          </div>
+          <div id="menu-items-list"></div>
+        </div>
+        
+        <div id="promotions-tab" class="tab-content">
+          <div class="section-header">
+            <div>
+              <h3>Promotions Management</h3>
+              <p>Create and manage special offers</p>
+            </div>
+            <button id="add-promo-btn" class="btn-primary">
+              <i class="fas fa-plus"></i>
+              Add Promotion
+            </button>
+          </div>
+          <div id="promotions-list"></div>
+        </div>
+        
+        <div id="contacts-tab" class="tab-content">
+          <div class="section-header">
+            <div>
+              <h3>Contact Submissions</h3>
+              <p>View customer messages and inquiries</p>
+            </div>
+            <button id="export-contacts" class="btn-secondary">
+              <i class="fas fa-download"></i>
+              Export
+            </button>
+          </div>
+          <div id="contacts-list"></div>
+        </div>
+        
+        <div id="settings-tab" class="tab-content">
+          <div class="section-header">
+            <h3>Settings</h3>
+          </div>
+          <div class="settings-grid">
+            <div class="setting-card">
+              <h4>Admin Password</h4>
+              <p>Change your admin login password</p>
+              <button class="btn-secondary" onclick="changePassword()">
+                <i class="fas fa-key"></i>
+                Change Password
+              </button>
+            </div>
+            <div class="setting-card">
+              <h4>Website Info</h4>
+              <p>Update restaurant contact information</p>
+              <button class="btn-secondary" onclick="editWebsiteInfo()">
+                <i class="fas fa-edit"></i>
+                Edit Info
+              </button>
+            </div>
+            <div class="setting-card">
+              <h4>Backup Data</h4>
+              <p>Export your restaurant data</p>
+              <button class="btn-secondary" onclick="exportData()">
+                <i class="fas fa-download"></i>
+                Export Data
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="modal" class="modal" style="display: none;">
+    <div class="modal-content">
+      <span class="close">&times;</span>
+      <h3 id="modal-title">Add Menu Item</h3>
+      <form id="menu-form">
+        <input type="hidden" id="item-id">
+        <div class="form-group">
+          <label for="item-name">Name</label>
+          <input type="text" id="item-name" required>
+        </div>
+        <div class="form-group">
+          <label for="item-price">Price (DA)</label>
+          <input type="number" id="item-price" required>
+        </div>
+        <div class="form-group">
+          <label for="item-category">Category</label>
+          <select id="item-category" required>
+            <option value="">Select Category</option>
+            <option value="Starters">Starters</option>
+            <option value="Main Dishes">Main Dishes</option>
+            <option value="Desserts">Desserts</option>
+            <option value="Drinks">Drinks</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="item-description">Description</label>
+          <textarea id="item-description" rows="3"></textarea>
+        </div>
+
+        <div class="form-actions">
+          <button type="submit" class="btn-primary">
+            <i class="fas fa-save"></i>
+            Save
+          </button>
+          <button type="button" class="btn-secondary" onclick="closeModal()">
+            <i class="fas fa-times"></i>
+            Cancel
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div id="promo-modal" class="modal" style="display: none;">
+    <div class="modal-content">
+      <span class="close" onclick="closePromoModal()">&times;</span>
+      <h3 id="promo-modal-title">Add Promotion</h3>
+      <form id="promo-form">
+        <input type="hidden" id="promo-id">
+        <div class="form-group">
+          <label for="promo-title">Title</label>
+          <input type="text" id="promo-title" required>
+        </div>
+        <div class="form-group">
+          <label for="promo-description">Description</label>
+          <textarea id="promo-description" rows="3" required></textarea>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="promo-discount">Discount (%)</label>
+            <input type="number" id="promo-discount" min="1" max="100" required>
+          </div>
+          <div class="form-group">
+            <label for="promo-code">Promo Code</label>
+            <input type="text" id="promo-code" required>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="promo-start">Start Date</label>
+            <input type="date" id="promo-start" required>
+          </div>
+          <div class="form-group">
+            <label for="promo-end">End Date</label>
+            <input type="date" id="promo-end" required>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>
+            <input type="checkbox" id="promo-active">
+            Active
+          </label>
+        </div>
+        <div class="form-actions">
+          <button type="submit" class="btn-primary">
+            <i class="fas fa-save"></i>
+            Save
+          </button>
+          <button type="button" class="btn-secondary" onclick="closePromoModal()">
+            <i class="fas fa-times"></i>
+            Cancel
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+             <script src="admin.js?v=8"></script>
+             <script>
+// Login script - runs after admin.js is loaded
+document.addEventListener("DOMContentLoaded", function() {
+  console.log("Login script loaded");
+  
+  // Set up login form handler
+  const loginForm = document.getElementById("login-form");
+  if (loginForm) {
+    console.log("Login form found");
+    loginForm.addEventListener("submit", async function (e) {
+      e.preventDefault();
+      console.log("Login form submitted");
+
+      const username = document.getElementById("admin-username").value;
+      const password = document.getElementById("admin-password").value;
+      
+      console.log("Username:", username);
+      console.log("Password:", password);
+
+      // JavaScript-only authentication (for GitHub Pages compatibility)
+      const VALID_USERNAME = "hakim2025";
+      const VALID_PASSWORD = "admin123";
+
+      if (username === VALID_USERNAME && password === VALID_PASSWORD) {
+        console.log("Login successful");
+        // Generate a simple token
+        const token = Math.random().toString(36).substring(2) + Date.now().toString(36);
+        localStorage.setItem("admin_token", token);
+        showLoginDashboard();
+      } else {
+        console.log("Login failed - invalid credentials");
+        alert("Nom d'utilisateur ou mot de passe incorrect.");
+      }
+    });
+  } else {
+    console.error("Login form not found");
+  }
+
+  // Check if user is already logged in
+  const token = localStorage.getItem("admin_token");
+  if (token) {
+    showLoginDashboard();
+  }
+  
+  // Add logout functionality
+  document.getElementById("logout-btn").addEventListener("click", () => {
+    localStorage.removeItem("admin_token");
+    document.getElementById("admin-dashboard").style.display = "none";
+    document.getElementById("login-section").style.display = "flex";
+    // Clear form fields
+    document.getElementById("admin-username").value = "";
+    document.getElementById("admin-password").value = "";
+  });
+});
+
+function showLoginDashboard() {
+  document.getElementById("login-section").style.display = "none";
+  document.getElementById("admin-dashboard").style.display = "block";
+}
+             </script>
+</body>
+</html> 
