@@ -347,12 +347,27 @@ function showConfirmation(message, title = 'Confirm Action', type = 'warning', c
 }
 
 async function loadDashboardData() {
+  console.log("loadDashboardData() called - starting to load data from Supabase");
   await Promise.all([
     loadMenuItems(),
     loadPromotions(),
     loadContactSubmissions()
   ]);
+  console.log("All dashboard data loading completed");
   // Dashboard stats are now updated after each data type is displayed
+}
+
+// Test function to manually update menu count
+window.testMenuCount = async function() {
+  console.log("Testing menu count update...");
+  const { data, error } = await supabase.from('menu_items').select('*');
+  if (error) {
+    console.error("Error:", error);
+  } else {
+    console.log("Found", data.length, "menu items");
+    document.getElementById('menu-count').textContent = data.length;
+    console.log("Menu count updated to:", data.length);
+  }
 }
 
 function updateDashboardStats() {
@@ -408,6 +423,8 @@ async function loadMenuItems() {
     
     console.log('Menu items loaded:', data);
     displayMenuItems(data || []);
+    // Force update menu count immediately
+    document.getElementById('menu-count').textContent = (data || []).length;
   } catch (error) {
     console.error('Error loading menu items:', error);
     showNotification('Error loading menu items', 'error');

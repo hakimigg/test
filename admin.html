@@ -380,9 +380,11 @@ document.addEventListener("DOMContentLoaded", function() {
 });
 
 function showLoginDashboard() {
+  console.log("showLoginDashboard called - hiding login, showing dashboard");
   document.getElementById("login-section").style.display = "none";
   document.getElementById("admin-dashboard").style.display = "block";
   // Load dashboard data after showing the dashboard
+  console.log("About to call loadDashboardData()");
   loadDashboardData();
 }
              </script>
